@@ -1,9 +1,11 @@
 import * as cp from 'child_process';
 import { commands, Uri, window } from 'vscode';
-import { Mode, Options } from './types';
+import { AudioCodec, Connection, Mode, Options } from './types';
 import {
   askForAlwaysOnTop,
+  askForAudioCodec,
   askForBitRate,
+  askForConnectionType,
   askForCrop,
   askForFrameRate,
   askForPath,
@@ -17,6 +19,8 @@ import {
 
 function start(options: Options) {
   const {
+    connection,
+    codec,
     bitrate,
     framerate,
     path,
@@ -28,10 +32,14 @@ function start(options: Options) {
     stayAwake,
   } = options;
 
-  const p = mode === 'record' ? path || getDefaultRecordingPath() : undefined;
-
+  const p = mode === Mode.record ? path || getDefaultRecordingPath() : undefined;
+  const connectionType = connection === Connection.tcp ? '-e'
+    : connection === Connection.usb ? '-d'
+      : '-s';
+  const audioCodecParam =
+    codec !== AudioCodec.no ? `${'--audio-codec='}${codec.toString()}` : '';
   const recordParam =
-    mode === 'record' ? `--record ${p}/${getDefaultFileName()}` : '';
+    mode === Mode.record ? `--record ${p}/${getDefaultFileName()}` : '';
   const bitrateParam = bitrate ? `--bit-rate ${bitrate}` : '';
   const framerateParam = framerate ? `--max-fps ${framerate}` : '';
   const sizeParam = size ? `--max-size ${size}` : '';
@@ -43,12 +51,12 @@ function start(options: Options) {
   showNotSpecifiedMessage(options);
 
   cp.exec(
-    `scrcpy ${recordParam} ${bitrateParam} ${framerateParam} ${sizeParam} ${cropParam} ${alwaysOnTopParam} ${turnScreenOffParam} ${stayAwakeParam}`,
+    `scrcpy ${connectionType} ${audioCodecParam} ${recordParam} ${bitrateParam} ${framerateParam} ${sizeParam} ${cropParam} ${alwaysOnTopParam} ${turnScreenOffParam} ${stayAwakeParam}`,
     error => {
       if (error?.message?.includes('command not found')) {
         window
           .showInformationMessage('scrcpy not found', {}, 'How to install')
-          .then(action => {
+          .then((action) => {
             if (action === 'How to install') {
               commands.executeCommand(
                 'vscode.open',
@@ -64,60 +72,77 @@ function start(options: Options) {
 }
 
 function mirror() {
-  start({ mode: 'mirror' });
+  start({ mode: Mode.mirror, connection: Connection.tcp, codec: AudioCodec.aac });
 }
 
 function record() {
-  start({ mode: 'record' });
+  start({ mode: Mode.record, connection: Connection.tcp, codec: AudioCodec.aac });
 }
 
 async function mirrorWithAlwaysOnTop() {
   start({
-    mode: 'mirror',
+    mode: Mode.mirror,
+    connection: Connection.tcp,
+    codec: AudioCodec.aac,
     alwaysOnTop: true,
   });
 }
 async function mirrorStayAwake() {
   start({
-    mode: 'mirror',
+    mode: Mode.mirror,
+    connection: Connection.tcp,
+    codec: AudioCodec.aac,
     stayAwake: true,
   });
 }
 
 async function mirrorScreenOff() {
   start({
-    mode: 'mirror',
+    mode: Mode.mirror,
+    connection: Connection.tcp,
+    codec: AudioCodec.aac,
     screenOff: true,
   });
 }
 
+async function customConnectionType(mode: Mode) {
+  const connection = await askForConnectionType();
+  start({ mode: mode, connection: connection, codec: AudioCodec.aac});
+}
+
+async function customAudioCodec(mode: Mode) {
+  const codec = await askForAudioCodec();
+  start({ mode: mode, connection: Connection.tcp, codec: codec});
+}
 
 async function customBitRate(mode: Mode) {
   const bitrate = await askForBitRate();
-  start({ mode: mode, bitrate: bitrate || null });
+  start({ mode: mode, connection: Connection.tcp, codec: AudioCodec.aac, bitrate: bitrate || null });
 }
 
 async function customFrameRate(mode: Mode) {
   const framerate = await askForFrameRate();
-  start({ mode: mode, framerate: framerate || null });
+  start({ mode: mode, connection: Connection.tcp, codec: AudioCodec.aac, framerate: framerate || null });
 }
 
 async function customPath() {
   const path = await askForPath();
-  start({ mode: 'record', path: path || null });
+  start({ mode: Mode.record, connection: Connection.tcp, codec: AudioCodec.aac, path: path || null });
 }
 
 async function customSize(mode: Mode) {
   const size = await askForSize();
-  start({ mode: mode, size: size || null });
+  start({ mode: mode, connection: Connection.tcp, codec: AudioCodec.aac, size: size || null });
 }
 
 async function customCrop(mode: Mode) {
   const crop = await askForCrop();
-  start({ mode: mode, crop: crop || null });
+  start({ mode: mode, connection: Connection.tcp, codec: AudioCodec.aac, crop: crop || null });
 }
 
 async function customEverything(mode: Mode) {
+  const connectionType = await askForConnectionType();
+  const audioCodec = await askForAudioCodec();
   const bitrate = await askForBitRate();
   const framerate = await askForFrameRate();
   const size = await askForSize();
@@ -127,11 +152,13 @@ async function customEverything(mode: Mode) {
   const alwaysOnTop = (await askForAlwaysOnTop()) || null;
 
   let path;
-  if (mode === 'record') {
+  if (mode === Mode.record) {
     path = await askForPath();
   }
   start({
     mode: mode,
+    connection: connectionType,
+    codec: audioCodec,
     bitrate: bitrate || null,
     framerate: framerate || null,
     path: path || null,
@@ -149,6 +176,8 @@ export {
   mirrorStayAwake,
   mirrorScreenOff,
   record,
+  customAudioCodec,
+  customConnectionType,
   customBitRate,
   customFrameRate,
   customPath,

@@ -14,20 +14,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:scrcpy.mirror",
-    "onCommand:scrcpy.mirrorAlwaysOnTop",
-    "onCommand:scrcpy.mirrorBitRate",
-    "onCommand:scrcpy.mirrorFrameRate",
-    "onCommand:scrcpy.mirrorSize",
-    "onCommand:scrcpy.mirrorCrop",
-    "onCommand:scrcpy.mirrorCustom",
-    "onCommand:scrcpy.record",
-    "onCommand:scrcpy.recordBitRate",
-    "onCommand:scrcpy.recordFrameRate",
-    "onCommand:scrcpy.recordPath",
-    "onCommand:scrcpy.recordSize",
-    "onCommand:scrcpy.recordCrop",
-    "onCommand:scrcpy.recordCustom"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -35,6 +22,16 @@
       {
         "command": "scrcpy.mirror",
         "title": "mirror",
+        "category": "scrcpy"
+      },
+      {
+        "command": "scrcpy.mirrorConnection",
+        "title": "define mirror connection type (tcp/ip, usb, serial)",
+        "category": "scrcpy"
+      },
+      {
+        "command": "scrcpy.mirrorAudioCodec",
+        "title": "define mirror audio codec (opus, aac, flac, raw)",
         "category": "scrcpy"
       },
       {
@@ -73,6 +70,16 @@
         "category": "scrcpy"
       },
       {
+        "command": "scrcpy.recordConnection",
+        "title": "define record connection type (tcp/ip, usb, serial)",
+        "category": "scrcpy"
+      },
+      {
+        "command": "scrcpy.recordAudioCodec",
+        "title": "define record audio codec (opus, aac, flac, raw)",
+        "category": "scrcpy"
+      },
+      {
         "command": "scrcpy.recordBitRate",
         "title": "record (specify bit rate)",
         "category": "scrcpy"
@@ -107,7 +114,8 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint . --ext 'src/**/*.{js,ts,tsx}'",
+    "lint:fix": "eslint 'src/**/*.{js,ts,tsx}' --fix",
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {

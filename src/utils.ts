@@ -1,5 +1,5 @@
 import { window, workspace } from 'vscode';
-import { Options } from './types';
+import { AudioCodec, Connection, Options } from './types';
 
 function getCurrentDateTimeString() {
   const d = new Date();
@@ -23,6 +23,22 @@ function getDefaultFileName() {
   return `scrcpy\\ recording\\ ${getCurrentDateTimeString()}.mp4`;
 }
 
+async function askForConnectionType(): Promise<Connection> {
+  const connections = [Connection.tcp, Connection.usb, Connection.serial];
+  const type = await window.showQuickPick(connections, {
+    placeHolder: 'Define connection type',
+  });
+  return connections.includes(type as Connection) ? type as Connection : Connection.tcp;
+}
+
+async function askForAudioCodec(): Promise<AudioCodec> {
+  const codecs = [AudioCodec.aac, AudioCodec.flac, AudioCodec.opus, AudioCodec.raw];
+  const type = await window.showQuickPick(codecs, {
+    placeHolder: 'Define connection type',
+  });
+  return codecs.includes(type as AudioCodec) ? type as AudioCodec : AudioCodec.no;
+}
+
 async function askForBitRate(): Promise<string | undefined> {
   return window.showInputBox({ placeHolder: 'Enter bit rate (e.g. 8M)' });
 }
@@ -31,7 +47,6 @@ async function askForAlwaysOnTop(): Promise<boolean | undefined> {
   const onTop = await window.showQuickPick(['Yes', 'No'], {
     placeHolder: 'Window always on top?',
   });
-
   return onTop === 'Yes';
 }
 
@@ -81,9 +96,10 @@ async function askForCrop(): Promise<string | undefined> {
  * Fields that were not asked of the user will be undefined.
  */
 function showNotSpecifiedMessage(options: Options) {
-  const { bitrate, framerate, path, size, crop } = options;
+  const { codec, bitrate, framerate, path, size, crop } = options;
 
   const fields = [];
+  if (codec === AudioCodec.no) fields.push('audio codec');
   if (bitrate === null) fields.push('bit rate');
   if (framerate === null) fields.push('frame rate');
   if (path === null) fields.push('path');
@@ -105,6 +121,8 @@ export {
   getCurrentDateTimeString,
   getDefaultRecordingPath,
   getDefaultFileName,
+  askForConnectionType,
+  askForAudioCodec,
   askForAlwaysOnTop,
   askForStayAwake,
   askForTurnScreenOff,

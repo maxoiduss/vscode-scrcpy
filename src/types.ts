@@ -1,7 +1,26 @@
-type Mode = 'mirror' | 'record';
+export const enum Mode {
+  mirror = 'mirror',
+  record = 'record',
+}
 
-interface Options {
+export const enum Connection {
+  tcp = 'tcp/ip',
+  usb = 'usb',
+  serial = 'serial'
+}
+
+export const enum AudioCodec {
+  opus = 'opus',
+  aac = 'aac',
+  flac = 'flac',
+  raw = 'raw',
+  no = ''
+}
+
+export interface Options {
   mode: Mode;
+  connection: Connection;
+  codec: AudioCodec;
   bitrate?: string | undefined | null;
   framerate?: string | undefined | null;
   path?: string | undefined | null;
@@ -11,5 +30,3 @@ interface Options {
   stayAwake?: boolean | undefined | null;
   screenOff?: boolean| undefined | null;
 }
-
-export { Mode, Options };
