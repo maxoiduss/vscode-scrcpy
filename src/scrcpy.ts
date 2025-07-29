@@ -42,7 +42,7 @@ async function start(options: Options) {
     codec !== AudioCodec.no ? `${'--audio-codec='}${codec.toString()}` : '';
   const recordParam =
     mode === Mode.record ? `--record ${p}/${getDefaultFileName()}` : '';
-  const bitrateParam = bitrate ? `--bit-rate ${bitrate}` : '';
+  const bitrateParam = bitrate ? `--video-bit-rate ${bitrate}` : '';
   const framerateParam = framerate ? `--max-fps ${framerate}` : '';
   const sizeParam = size ? `--max-size ${size}` : '';
   const cropParam = crop ? `--crop ${crop}` : '';
@@ -59,7 +59,7 @@ async function start(options: Options) {
     placeHolder: 'Where to run scrcpy?'
   });
   if (whereToRun === runOptions[1]) {
-    cp.exec(command, error => async () =>
+    cp.exec(command, error =>
     {
       if (error?.message?.includes('command not found')) {
         showHowToInstallScrcpy("GenyMode's scrcpy not found?")
@@ -134,6 +134,7 @@ async function mirrorScreenOff() {
 
 async function customConnectionType(mode: Mode) {
   const connection = await askForConnectionType();
+  const codec = await askForAudioCodec();
   start({ mode: mode, connection: connection, codec: AudioCodec.aac});
 }
 
@@ -144,27 +145,32 @@ async function customAudioCodec(mode: Mode) {
 
 async function customBitRate(mode: Mode) {
   const bitrate = await askForBitRate();
-  start({ mode: mode, connection: Connection.no, codec: AudioCodec.aac, bitrate: bitrate || null });
+  const codec = await askForAudioCodec();
+  start({ mode: mode, connection: Connection.no, codec: codec, bitrate: bitrate || null });
 }
 
 async function customFrameRate(mode: Mode) {
   const framerate = await askForFrameRate();
-  start({ mode: mode, connection: Connection.no, codec: AudioCodec.aac, framerate: framerate || null });
+  const codec = await askForAudioCodec();
+  start({ mode: mode, connection: Connection.no, codec: codec, framerate: framerate || null });
 }
 
 async function customPath() {
   const path = await askForPath();
-  start({ mode: Mode.record, connection: Connection.no, codec: AudioCodec.aac, path: path || null });
+  const codec = await askForAudioCodec();
+  start({ mode: Mode.record, connection: Connection.no, codec: codec, path: path || null });
 }
 
 async function customSize(mode: Mode) {
   const size = await askForSize();
-  start({ mode: mode, connection: Connection.no, codec: AudioCodec.aac, size: size || null });
+  const codec = await askForAudioCodec();
+  start({ mode: mode, connection: Connection.no, codec: codec, size: size || null });
 }
 
 async function customCrop(mode: Mode) {
   const crop = await askForCrop();
-  start({ mode: mode, connection: Connection.no, codec: AudioCodec.aac, crop: crop || null });
+  const codec = await askForAudioCodec();
+  start({ mode: mode, connection: Connection.no, codec: codec, crop: crop || null });
 }
 
 async function customEverything(mode: Mode) {
