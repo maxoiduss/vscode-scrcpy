@@ -17,7 +17,7 @@ import {
   showNotSpecifiedMessage
 } from './utils';
 
-function start(options: Options) {
+async function start(options: Options) {
   const {
     connection,
     codec,
@@ -33,9 +33,11 @@ function start(options: Options) {
   } = options;
 
   const p = mode === Mode.record ? path || getDefaultRecordingPath() : undefined;
-  const connectionType = connection === Connection.tcp ? '-e'
+  const connectionType = connection !== Connection.no ?
+    connection === Connection.tcp ? '-e'
     : connection === Connection.usb ? '-d'
-      : '-s';
+      : '-s'
+  : connection;
   const audioCodecParam =
     codec !== AudioCodec.no ? `${'--audio-codec='}${codec.toString()}` : '';
   const recordParam =
@@ -50,39 +52,64 @@ function start(options: Options) {
 
   showNotSpecifiedMessage(options);
 
-  cp.exec(
-    `scrcpy ${connectionType} ${audioCodecParam} ${recordParam} ${bitrateParam} ${framerateParam} ${sizeParam} ${cropParam} ${alwaysOnTopParam} ${turnScreenOffParam} ${stayAwakeParam}`,
-    error => {
+  const command = `scrcpy ${connectionType} ${audioCodecParam} ${recordParam} ${bitrateParam} ${framerateParam} ${sizeParam} ${cropParam} ${alwaysOnTopParam} ${turnScreenOffParam} ${stayAwakeParam}`;
+  
+  const runOptions = ['run in cmd/powershell', 'run in background'];
+  const whereToRun = await window.showQuickPick(runOptions, {
+    placeHolder: 'Where to run scrcpy?'
+  });
+  if (whereToRun === runOptions[1]) {
+    cp.exec(command, error => async () =>
+    {
       if (error?.message?.includes('command not found')) {
-        window
-          .showInformationMessage('scrcpy not found', {}, 'How to install')
-          .then((action) => {
-            if (action === 'How to install') {
-              commands.executeCommand(
-                'vscode.open',
-                Uri.parse('https://github.com/Genymobile/scrcpy#get-the-app'),
-              );
-            }
-          });
+        showHowToInstallScrcpy("GenyMode's scrcpy not found?")
       } else if (error) {
         window.showErrorMessage(error.message);
       }
-    },
-  );
+    });
+  } else if (whereToRun === runOptions[0])  {
+    const ignoreUnexistanceOfscrcpy = await window.showQuickPick(['yes', 'no'], {
+      placeHolder: 'Do you have scrcpy on your local machine?'
+    });
+    if (ignoreUnexistanceOfscrcpy === 'no') {
+        showHowToInstallScrcpy("Install GenyMode's scrcpy?");
+    } else {
+      const extensioName = "scrcpy";
+      let terminal = window.terminals.find(
+        (term) => term.name === extensioName
+      );
+      if (!terminal) {
+        terminal = window.createTerminal(extensioName);
+      }
+      terminal.show();
+      terminal.sendText(command);
+    }
+  }
+}
+
+async function showHowToInstallScrcpy(question: string) {
+  const installscrcpyMessage: string = 'How to install';
+  const answer = await window.showInformationMessage<string>(question, {modal: true}, installscrcpyMessage);
+  if (answer === installscrcpyMessage) {
+    commands.executeCommand(
+      'vscode.open',
+      Uri.parse('https://github.com/Genymobile/scrcpy#get-the-app'),
+    );
+  }
 }
 
 function mirror() {
-  start({ mode: Mode.mirror, connection: Connection.tcp, codec: AudioCodec.aac });
+  start({ mode: Mode.mirror, connection: Connection.no, codec: AudioCodec.aac });
 }
 
 function record() {
-  start({ mode: Mode.record, connection: Connection.tcp, codec: AudioCodec.aac });
+  start({ mode: Mode.record, connection: Connection.no, codec: AudioCodec.aac });
 }
 
 async function mirrorWithAlwaysOnTop() {
   start({
     mode: Mode.mirror,
-    connection: Connection.tcp,
+    connection: Connection.no,
     codec: AudioCodec.aac,
     alwaysOnTop: true,
   });
@@ -90,7 +117,7 @@ async function mirrorWithAlwaysOnTop() {
 async function mirrorStayAwake() {
   start({
     mode: Mode.mirror,
-    connection: Connection.tcp,
+    connection: Connection.no,
     codec: AudioCodec.aac,
     stayAwake: true,
   });
@@ -99,7 +126,7 @@ async function mirrorStayAwake() {
 async function mirrorScreenOff() {
   start({
     mode: Mode.mirror,
-    connection: Connection.tcp,
+    connection: Connection.no,
     codec: AudioCodec.aac,
     screenOff: true,
   });
@@ -112,32 +139,32 @@ async function customConnectionType(mode: Mode) {
 
 async function customAudioCodec(mode: Mode) {
   const codec = await askForAudioCodec();
-  start({ mode: mode, connection: Connection.tcp, codec: codec});
+  start({ mode: mode, connection: Connection.no, codec: codec});
 }
 
 async function customBitRate(mode: Mode) {
   const bitrate = await askForBitRate();
-  start({ mode: mode, connection: Connection.tcp, codec: AudioCodec.aac, bitrate: bitrate || null });
+  start({ mode: mode, connection: Connection.no, codec: AudioCodec.aac, bitrate: bitrate || null });
 }
 
 async function customFrameRate(mode: Mode) {
   const framerate = await askForFrameRate();
-  start({ mode: mode, connection: Connection.tcp, codec: AudioCodec.aac, framerate: framerate || null });
+  start({ mode: mode, connection: Connection.no, codec: AudioCodec.aac, framerate: framerate || null });
 }
 
 async function customPath() {
   const path = await askForPath();
-  start({ mode: Mode.record, connection: Connection.tcp, codec: AudioCodec.aac, path: path || null });
+  start({ mode: Mode.record, connection: Connection.no, codec: AudioCodec.aac, path: path || null });
 }
 
 async function customSize(mode: Mode) {
   const size = await askForSize();
-  start({ mode: mode, connection: Connection.tcp, codec: AudioCodec.aac, size: size || null });
+  start({ mode: mode, connection: Connection.no, codec: AudioCodec.aac, size: size || null });
 }
 
 async function customCrop(mode: Mode) {
   const crop = await askForCrop();
-  start({ mode: mode, connection: Connection.tcp, codec: AudioCodec.aac, crop: crop || null });
+  start({ mode: mode, connection: Connection.no, codec: AudioCodec.aac, crop: crop || null });
 }
 
 async function customEverything(mode: Mode) {

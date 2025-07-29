@@ -28,13 +28,13 @@ async function askForConnectionType(): Promise<Connection> {
   const type = await window.showQuickPick(connections, {
     placeHolder: 'Define connection type',
   });
-  return connections.includes(type as Connection) ? type as Connection : Connection.tcp;
+  return connections.includes(type as Connection) ? type as Connection : Connection.no;
 }
 
 async function askForAudioCodec(): Promise<AudioCodec> {
   const codecs = [AudioCodec.aac, AudioCodec.flac, AudioCodec.opus, AudioCodec.raw];
   const type = await window.showQuickPick(codecs, {
-    placeHolder: 'Define connection type',
+    placeHolder: 'Define audio codec',
   });
   return codecs.includes(type as AudioCodec) ? type as AudioCodec : AudioCodec.no;
 }

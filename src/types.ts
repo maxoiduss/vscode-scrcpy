@@ -6,7 +6,8 @@ export const enum Mode {
 export const enum Connection {
   tcp = 'tcp/ip',
   usb = 'usb',
-  serial = 'serial'
+  serial = 'serial',
+  no = ''
 }
 
 export const enum AudioCodec {
